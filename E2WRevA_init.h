@@ -1,25 +1,10 @@
 #ifndef E2WRevA_init_h
 #define E2WRevA_init_h
 #include "Arduino.h"
-//class Rechteck
-//{
-//  private:
-//  int breite;
-//  int laenge;
-//  public:
-//  Rechteck(int b, int l);
-//  int get_Breite()
-//  void set_Breite(int b);
-//  int get_Laenge()
-//  void set_Laenge(int b);
-//};
-
-
 
 //######################################################################################################
 //################################## PIN DEFINITIONEN ##################################################
 
-// These are 'flexible' lines that can be changed
 #define TFT_CS 41
 #define TFT_DC 42
 #define TFT_RST 43 // RST can be set to -1 if you tie it to Arduino's reset
@@ -63,12 +48,20 @@
 #define MaxPWMCount 6000
 #define TFTadcUpdateTime 500
 #define SumUpIntervalTime 5
+#define MpptTime 800
 
 
 //TFT Farben
 //#define VIOLETTBLAU 0x4111
 #define VIOLETTBLAU 0x4210
 #define DUNKELBLAU 0x0111
+
+//MPPT
+#define MPPT_STEP 100
+
+//Taste4 Blink
+#define Taster4BlinONkTime 300
+#define Taster4BlinOFFkTime 1500
 
 //######################################################################################################
 //################################## GLOBALE VARIABLEN #################################################
@@ -98,6 +91,17 @@ volatile boolean lastRunTaste = HIGH;
 int ReglerErkennung = 0;
 unsigned long TFTadcUpdateTimeStamp = 0;
 unsigned long sumUpStartTime = 0;
+
+//MPPT
+int lastPowerPoint = 0;
+boolean mpptUpDown = LOW;
+unsigned long mpptTimeStamp = 0;
+
+//TASTER4 Blink
+unsigned long taster4BlinkONTimeStamp = 0;
+unsigned long taster4BlinkOFFTimeStamp = 0;
+
+
 
 
 //Filter
