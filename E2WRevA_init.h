@@ -45,9 +45,9 @@
 //################################## Konstanten ########################################################
 // Size of the boxes for TFT-Layout
 #define BOXSIZE 160
-#define MaxPWMCount 6000
+#define MaxPWMCount 7000
 #define TFTadcUpdateTime 500
-#define SumUpIntervalTime 5
+#define SumUpIntervalTime 20
 #define MpptTime 800
 
 
@@ -91,6 +91,7 @@ volatile boolean lastRunTaste = HIGH;
 int ReglerErkennung = 0;
 unsigned long TFTadcUpdateTimeStamp = 0;
 unsigned long sumUpStartTime = 0;
+unsigned long vcADCTime = 0;
 
 //MPPT
 int lastPowerPoint = 0;
@@ -101,7 +102,17 @@ unsigned long mpptTimeStamp = 0;
 unsigned long taster4BlinkONTimeStamp = 0;
 unsigned long taster4BlinkOFFTimeStamp = 0;
 
-
+//ADC Messwerte (auch gefilterte und verrechnete)
+int adc_U1, adc_U2, adc_I1, adc_I2, adc_Iref, adc_2V5ref, adc_NTC1, adc_NTC2;
+long iirADC_U1 = 0;
+long iirADC_U2 = 0;
+long iirADC_I1 = 0;
+long iirADC_I2 = 0;
+long iirADC_Iref = 0;
+long iirADC_2V5ref = 0;
+long iirADC_NTC1 = 0;
+long iirADC_NTC2 = 0;
+int u1_mV, u2_mV, i1_mA, i2_mA, iref_mA, uref_mV, ntc1_GC, ntc2_GC;
 
 
 //Filter
@@ -124,7 +135,17 @@ boolean stringComplete = false;  // whether the string is complete
 boolean nachTrennzeichen = false; //gibt an ob schon ein Leerzeichen im String vorkommt
 
 int NullpunktPWM = MaxPWMCount/2;
+int i2SollPWM = NullpunktPWM;
 
+//Nachregelung
+int nachRegelungU2Max = 0;
+int nachRegelungU1Max = 0;
+int nachRegelungU2Min = 0;
+int nachRegelungU1Min = 0;
+int nachRegelungI2Soll = 0;
+ //Nullpunktnachregelung
+int pwmZielwert = MaxPWMCount/2;
+ 
 void initE2W(void){
 //######################################################################################################
 //################################## PIN INIT ##########################################################
@@ -220,6 +241,7 @@ REG_PWM_CPRD2 = MaxPWMCount;                // initialize PWM period -> T = valu
 REG_PWM_CDTY2 = 3000;                // initialize duty cycle, REG_PWM_CPRD6 / value = duty cycle, for 8/4 = 50%
 REG_PWM_ENA = 1<<2;               // enable PWM on PWM channel (pin 6 = PWML7)
 
+
 //Pin 36 wird echter PWM-Pin für TFT-Lite
 mask_PWM_pin = digitalPinToBitMask(36);
 //REG_PMC_PCER1 = 1<<4;               // activate clock for PWM controller
@@ -227,7 +249,7 @@ REG_PIOC_PDR |= mask_PWM_pin;  // activate peripheral functions for pin (disable
 REG_PIOC_ABSR |= mask_PWM_pin; // choose peripheral option B   
 //REG_PWM_CLK = 0;                     // choose clock rate, 0 -> full MCLK as reference 84MHz
 REG_PWM_CMR1 = 0<<9;             // select clock and polarity for PWM channel PWML1 (pin38) -> (CPOL = 0)
-REG_PWM_CPRD1 = MaxPWMCount;                // initialize PWM period -> T = value/84MHz (value: up to 16bit), value=8 -> 10.5MHz
+REG_PWM_CPRD1 = 1000;                // initialize PWM period -> T = value/84MHz (value: up to 16bit), value=8 -> 10.5MHz
  // note : with this 5000 setting, we have thus 1/5000 resol, with a frequency of 16khz, if we use the defaut main clock : that's good
 
 REG_PWM_CDTY1 = 0;                // initialize duty cycle, REG_PWM_CPRD6 / value = duty cycle, for 8/4 = 50%
